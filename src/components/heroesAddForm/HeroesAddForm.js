@@ -1,9 +1,10 @@
-import {useHttp} from '../../hooks/http.hook';
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 
-import { heroCreated } from '../../components/heroesList/heroesSlice';
+import { useCreateHeroMutation } from "../../api/apiSlice";
+import {selectAll} from "../heroesFilters/filtersSlice";
+import store from "../../store";
 
 const HeroesAddForm = () => {
     // Состояния для контроля формы
@@ -11,9 +12,9 @@ const HeroesAddForm = () => {
     const [heroDescr, setHeroDescr] = useState('');
     const [heroElement, setHeroElement] = useState('');
 
-    const {filters, filtersLoadingStatus} = useSelector(state => state.filters);
-    const dispatch = useDispatch();
-    const {request} = useHttp();
+    const {filtersLoadingStatus} = useSelector(state => state.filters);
+    const filters = selectAll(store.getState());
+    const [createHero, {isLoading}] = useCreateHeroMutation();
 
     const onSubmitHandler = (e) => {
         e.preventDefault();
@@ -29,10 +30,7 @@ const HeroesAddForm = () => {
 
         // Отправляем данные на сервер в формате JSON
         // ТОЛЬКО если запрос успешен - отправляем персонажа в store
-        request("http://localhost:3001/heroes", "POST", JSON.stringify(newHero))
-            .then(res => console.log(res, 'Отправка успешна'))
-            .then(dispatch(heroCreated(newHero)))
-            .catch(err => console.log(err));
+        createHero(newHero).unwrap();
 
         // Очищаем форму после отправки
         setHeroName('');
